@@ -1,0 +1,87 @@
+Global:
+  use_gpu: true
+  epoch_num: 50
+  log_smooth_window: 20
+  print_batch_step: 50
+  save_model_dir: E:\PaddleOCR\output\distill_32_256_v3
+  save_epoch_step: 2
+  # evaluation is run every 2000 iterations
+  eval_batch_step: [0, 500]
+  cal_metric_during_train: True
+  pretrained_model:
+  checkpoints: # E:\PaddleOCR\output\ytrn_32_256_v3_scru\latest   # E:\PaddleOCR\output\ytrn_simcru_seq_256\best_accuracy
+  save_inference_dir:
+  use_visualdl: False
+  infer_img: doc/imgs_words_en/word_10.png
+  # for data or label process
+  character_dict_path: E:\yi_dataset\paddle_code_book.txt
+  max_text_length: 100
+  infer_mode: False
+  use_space_char: False
+  save_res_path: ./output/rec/predicts_r34_vd_none_none_ctc.txt
+
+Optimizer:
+  name: Adam
+  beta1: 0.9
+  beta2: 0.999
+  lr:
+    name: Piecewise
+    decay_epochs: [4, 8]
+    values: [0.0001, 0.0001, 0.0001]
+  regularizer:
+    name: 'L2'
+    factor: 2e-05
+
+Architecture:
+  model_type: rec
+  algorithm: Rosetta
+  Backbone:
+    name: DBLSTM
+  Neck:
+    name: SequenceEncoder
+    encoder_type: reshape
+  Head:
+    name: CTCHead
+    fc_decay: 0.0004
+
+Loss:
+  name: CTCLoss
+
+PostProcess:
+  name: CTCLabelDecode
+
+Metric:
+  name: RecMetric
+  main_indicator: acc
+
+Train:
+  dataset:
+    name: YiDataSet
+    data_dir: E:\\yi_dataset\\yi_32_256_v3\\lmdb\\train
+    transforms:
+      - CTCLabelEncode: # Class handling label
+      #- YiAug:
+      - KeepKeys:
+          keep_keys: ['image', 'label', 'length', 'seq'] # dataloader will return list in this order
+  loader:
+    shuffle: True
+    batch_size_per_card: 64
+    drop_last: True
+    num_workers: 0
+
+Eval:
+  dataset:
+    name: YiDataSet
+    data_dir: E:\\yi_dataset\\yi_32_256_v3\\lmdb\\valid
+    transforms:
+      - CTCLabelEncode: # Class handling label
+      # - YiAug:
+      - KeepKeys:
+          keep_keys: ['image', 'label', 'length', 'seq'] # dataloader will return list in this order
+  loader:
+    shuffle: False
+    drop_last: False
+    batch_size_per_card: 64
+    num_workers: 0
+
+

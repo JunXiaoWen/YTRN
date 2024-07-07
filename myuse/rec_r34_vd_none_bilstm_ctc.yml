@@ -1,0 +1,87 @@
+Global:
+  use_gpu: true
+  epoch_num: 500
+  log_smooth_window: 20
+  print_batch_step: 50
+  save_model_dir: E:\PaddleOCR\output\r34_bilstm_ctc
+  save_epoch_step: 3
+  # evaluation is run every 2000 iterations
+  eval_batch_step: [0, 2000]
+  cal_metric_during_train: True
+  pretrained_model: E:\PaddleOCR\output\mv3_none_ctc\best_accuracy
+  checkpoints: # E:\PaddleOCR\output\r34_bilstm_ctc\latest
+  save_inference_dir:
+  use_visualdl: False
+  infer_img: doc/imgs_words_en/word_10.png
+  # for data or label process
+  character_dict_path: E:\yi_dataset\yi_image_50000\label\paddle_code_book.txt
+  max_text_length: 25
+  infer_mode: False
+  use_space_char: False
+  save_res_path: ./output/rec/predicts_r34_vd_none_bilstm_ctc.txt
+
+Optimizer:
+  name: Adam
+  beta1: 0.9
+  beta2: 0.999
+  lr:
+    learning_rate: 0.0005
+  regularizer:
+    name: 'L2'
+    factor: 0
+
+Architecture:
+  model_type: rec
+  algorithm: CRNN
+  Transform:
+  Backbone:
+    name: ResNet
+    layers: 34
+  Neck:
+    name: SequenceEncoder
+    encoder_type: reshape
+    hidden_size: 256
+    with_lienar: True
+    direction: bidirectional
+    num_layers: 2
+  Head:
+    name: CTCHead
+    fc_decay: 0
+
+Loss:
+  name: CTCLoss
+
+PostProcess:
+  name: CTCLabelDecode
+
+Metric:
+  name: RecMetric
+  main_indicator: acc
+
+Train:
+  dataset:
+    name: YiDataSet
+    data_dir: E:\\yi_dataset\\yi_image_50000\\lmdb\\aug_with_seq\\train
+    transforms:
+      - CTCLabelEncode: # Class handling label
+      - KeepKeys:
+          keep_keys: ['image', 'label', 'length', 'seq'] # dataloader will return list in this order
+  loader:
+    shuffle: True
+    batch_size_per_card: 128
+    drop_last: True
+    num_workers: 0
+
+Eval:
+  dataset:
+    name: YiDataSet
+    data_dir: E:\\yi_dataset\\yi_image_50000\\lmdb\\aug_with_seq\\valid
+    transforms:
+      - CTCLabelEncode: # Class handling label
+      - KeepKeys:
+          keep_keys: ['image', 'label', 'length', 'seq'] # dataloader will return list in this order
+  loader:
+    shuffle: False
+    drop_last: False
+    batch_size_per_card: 128
+    num_workers: 0
